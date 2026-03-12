@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/constants/app_routes.dart';
 import 'core/theme/app_theme.dart';
@@ -7,8 +8,18 @@ import 'features/home/presentation/pages/access_detail_page.dart';
 import 'features/home/presentation/pages/access_list_page.dart';
 import 'features/home/presentation/pages/dashboard_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await _loadEnv();
   runApp(const DashboardApp());
+}
+
+Future<void> _loadEnv() async {
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    // Ignore: fallback values are handled in ApiConfig.
+  }
 }
 
 class DashboardApp extends StatelessWidget {
