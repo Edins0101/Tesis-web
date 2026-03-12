@@ -5,7 +5,7 @@ COPY . .
 
 RUN flutter clean
 RUN flutter pub get
-RUN flutter build web --release --no-wasm
+RUN flutter build web --release
 
 FROM nginx:alpine
 COPY --from=build /app/build/web /usr/share/nginx/html
