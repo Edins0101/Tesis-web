@@ -3,6 +3,7 @@ class AuthDataSource {
     required String email,
     required String password,
   }) async {
-    return email.isNotEmpty && password.isNotEmpty;
+    final username = email.trim();
+    return username == 'admin' && password == 'Admin0101*';
   }
 }

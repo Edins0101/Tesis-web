@@ -25,6 +25,7 @@ class AppScreenLayout extends StatelessWidget {
         }
 
         return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DashboardSidebar(
               selected: selectedDestination,

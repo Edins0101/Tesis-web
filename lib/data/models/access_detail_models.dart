@@ -41,6 +41,7 @@ class AccessDetailData {
     required this.guard,
     required this.capturedImageAvailable,
     this.capturedImagePath,
+    this.capturedImageBase64,
   });
 
   final int accessId;
@@ -56,4 +57,5 @@ class AccessDetailData {
   final AccessPersonInfo guard;
   final bool capturedImageAvailable;
   final String? capturedImagePath;
+  final String? capturedImageBase64;
 }

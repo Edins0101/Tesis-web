@@ -1,6 +1,10 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/api_config.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../data/models/access_detail_models.dart';
 import '../../../../data/models/access_list_models.dart';
@@ -323,6 +327,7 @@ class _DetailInfoGrid extends StatelessWidget {
         title: 'Imagen capturada',
         child: _ImagePlaceholder(
           imagePath: detail.capturedImagePath,
+          imageBase64: detail.capturedImageBase64,
           isAvailable: detail.capturedImageAvailable,
         ),
       ),
@@ -476,17 +481,78 @@ class _SummaryDataCard extends StatelessWidget {
   }
 }
 
-class _ImagePlaceholder extends StatelessWidget {
+class _ImagePlaceholder extends StatefulWidget {
   const _ImagePlaceholder({
     required this.imagePath,
+    required this.imageBase64,
     required this.isAvailable,
   });
 
   final String? imagePath;
+  final String? imageBase64;
   final bool isAvailable;
 
   @override
+  State<_ImagePlaceholder> createState() => _ImagePlaceholderState();
+}
+
+class _ImagePlaceholderState extends State<_ImagePlaceholder> {
+  late List<String> _candidateUrls;
+  Uint8List? _imageBytes;
+  int _currentCandidate = 0;
+
+  bool get _hasBase64Source {
+    final value = widget.imageBase64?.trim();
+    return value != null && value.isNotEmpty;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _syncImageSources();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ImagePlaceholder oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imagePath != widget.imagePath ||
+        oldWidget.imageBase64 != widget.imageBase64) {
+      _syncImageSources();
+    }
+  }
+
+  void _syncImageSources() {
+    _candidateUrls = _buildImageCandidates(widget.imagePath);
+    _imageBytes = _decodeBase64Image(widget.imageBase64);
+    _currentCandidate = 0;
+  }
+
+  bool get _hasImagePath {
+    final path = widget.imagePath?.trim();
+    return path != null && path.isNotEmpty;
+  }
+
+  bool get _hasMoreCandidates => _currentCandidate < _candidateUrls.length - 1;
+
+  void _tryNextCandidate() {
+    if (!_hasMoreCandidates) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _currentCandidate += 1);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final imageBytes = _imageBytes;
+    final imageUrl = _hasImagePath && _candidateUrls.isNotEmpty
+        ? _candidateUrls[_currentCandidate]
+        : null;
+
     return Container(
       height: 220,
       decoration: BoxDecoration(
@@ -494,34 +560,173 @@ class _ImagePlaceholder extends StatelessWidget {
         border: Border.all(color: AppColors.panelBorder),
         color: const Color(0xFFFAFCFF),
       ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.photo_camera_outlined, size: 34),
-            const SizedBox(height: 8),
+      child: imageBytes != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.memory(
+                imageBytes,
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (context, error, stackTrace) {
+                  return _ImageStatus(
+                    title: 'No se pudo decodificar la imagen',
+                    subtitle: widget.imagePath,
+                  );
+                },
+              ),
+            )
+          : imageUrl != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topCenter,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (context, error, stackTrace) {
+                      if (_hasMoreCandidates) {
+                        _tryNextCandidate();
+                        return const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        );
+                      }
+                      return _ImageStatus(
+                        title: 'No se pudo cargar la imagen',
+                        subtitle: widget.imagePath,
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) {
+                        return child;
+                      }
+                      return const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      );
+                    },
+                  ),
+                )
+              : _ImageStatus(
+                  title: widget.isAvailable
+                      ? _hasBase64Source
+                          ? 'Base64 de imagen invalido'
+                          : 'Imagen disponible sin datos validos'
+                      : 'Imagen no disponible',
+                  subtitle: widget.imagePath,
+                ),
+    );
+  }
+}
+
+class _ImageStatus extends StatelessWidget {
+  const _ImageStatus({
+    required this.title,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.photo_camera_outlined, size: 34),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (subtitle != null && subtitle!.isNotEmpty) ...[
+            const SizedBox(height: 4),
             Text(
-              isAvailable ? 'Imagen cargada' : 'Imagen no disponible',
+              subtitle!,
               style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w700,
+                color: AppColors.textMuted,
+                fontSize: 12,
               ),
             ),
-            if (imagePath != null && imagePath!.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                imagePath!,
-                style: const TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 12,
-                ),
-              ),
-            ],
           ],
-        ),
+        ],
       ),
     );
   }
+}
+
+List<String> _buildImageCandidates(String? rawPath) {
+  final path = rawPath?.trim() ?? '';
+  if (path.isEmpty) {
+    return const [];
+  }
+
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return [path];
+  }
+
+  final normalizedBase =
+      ApiConfig.baseUrl.trim().replaceFirst(RegExp(r'/+$'), '');
+  final normalizedPath = path.replaceFirst(RegExp(r'^/+'), '');
+  final candidates = <String>{};
+
+  candidates.add('$normalizedBase/$normalizedPath');
+
+  if (normalizedPath.startsWith('storage/')) {
+    final withoutStorage =
+        normalizedPath.replaceFirst(RegExp(r'^storage/+'), '');
+    candidates.add('$normalizedBase/public/storage/$withoutStorage');
+    candidates.add('$normalizedBase/public/$normalizedPath');
+  } else {
+    candidates.add('$normalizedBase/storage/$normalizedPath');
+    candidates.add('$normalizedBase/public/storage/$normalizedPath');
+  }
+
+  return candidates.toList(growable: false);
+}
+
+Uint8List? _decodeBase64Image(String? raw) {
+  final input = raw?.trim() ?? '';
+  if (input.isEmpty) {
+    return null;
+  }
+
+  final data =
+      input.contains(',') ? input.substring(input.indexOf(',') + 1) : input;
+  final normalized = data.replaceAll(RegExp(r'\s+'), '');
+  final standard = normalized.replaceAll('-', '+').replaceAll('_', '/');
+  final padded = _padBase64(standard);
+
+  try {
+    return base64Decode(normalized);
+  } catch (_) {
+    try {
+      return base64Decode(standard);
+    } catch (_) {
+      try {
+        return base64Decode(padded);
+      } catch (_) {
+        try {
+          return base64Url.decode(normalized);
+        } catch (_) {
+          return null;
+        }
+      }
+    }
+  }
+}
+
+String _padBase64(String value) {
+  final remainder = value.length % 4;
+  if (remainder == 0) {
+    return value;
+  }
+  return '$value${'=' * (4 - remainder)}';
 }
 
 class _TagChip extends StatelessWidget {

@@ -60,6 +60,7 @@ class MockAccessDetailService implements AccessDetailService {
       ),
       capturedImageAvailable: false,
       capturedImagePath: null,
+      capturedImageBase64: null,
     );
   }
 }

@@ -13,10 +13,12 @@ class BottomCharts extends StatelessWidget {
     super.key,
     required this.data,
     required this.compact,
+    this.fillAvailableHeight = false,
   });
 
   final DashboardData data;
   final bool compact;
+  final bool fillAvailableHeight;
 
   @override
   Widget build(BuildContext context) {

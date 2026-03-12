@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/constants/app_routes.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/presentation/auth_page.dart';
 import 'features/home/presentation/pages/access_detail_page.dart';
 import 'features/home/presentation/pages/access_list_page.dart';
 import 'features/home/presentation/pages/dashboard_page.dart';
@@ -19,8 +20,9 @@ class DashboardApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Dashboard de Accesos',
       theme: AppTheme.light,
-      initialRoute: AppRoutes.dashboard,
+      initialRoute: AppRoutes.login,
       routes: {
+        AppRoutes.login: (_) => const AuthPage(),
         AppRoutes.dashboard: (_) => const DashboardPage(),
         AppRoutes.accessList: (_) => const AccessListPage(),
       },

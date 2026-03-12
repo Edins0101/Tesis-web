@@ -13,19 +13,23 @@ class AccessRecordsTable extends StatelessWidget {
   const AccessRecordsTable({
     super.key,
     required this.records,
-    required this.currentPage,
-    required this.totalPages,
-    required this.totalRecords,
-    required this.onPageChanged,
     required this.onViewRecord,
+    this.currentPage = 1,
+    this.totalPages = 1,
+    this.totalRecords,
+    this.onPageChanged,
+    this.title = 'Registro de Accesos',
+    this.showPagination = true,
   });
 
   final List<AccessRecord> records;
   final int currentPage;
   final int totalPages;
-  final int totalRecords;
-  final ValueChanged<int> onPageChanged;
+  final int? totalRecords;
+  final ValueChanged<int>? onPageChanged;
   final ValueChanged<AccessRecord> onViewRecord;
+  final String title;
+  final bool showPagination;
 
   @override
   Widget build(BuildContext context) {
@@ -45,8 +49,8 @@ class AccessRecordsTable extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Registro de Accesos',
+                    Text(
+                      title,
                       style: TextStyle(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w700,
@@ -54,7 +58,7 @@ class AccessRecordsTable extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '$totalRecords registros',
+                      '${totalRecords ?? records.length} registros',
                       style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w600,
@@ -72,53 +76,80 @@ class AccessRecordsTable extends StatelessWidget {
                   child: Column(
                     children: [
                       _TableHeader(layout: layout),
-                      for (final record in records)
-                        _TableRow(
-                          record: record,
-                          layout: layout,
-                          onViewRecord: onViewRecord,
-                        ),
+                      if (records.isEmpty)
+                        const _EmptyTableRow()
+                      else
+                        for (final record in records)
+                          _TableRow(
+                            record: record,
+                            layout: layout,
+                            onViewRecord: onViewRecord,
+                          ),
                     ],
                   ),
                 ),
               ),
-              const Divider(height: 1, color: AppColors.panelBorder),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: tableWidth,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Pagina $currentPage de $totalPages',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
+              if (showPagination) ...[
+                const Divider(height: 1, color: AppColors.panelBorder),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Pagina $currentPage de $totalPages',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        Wrap(
-                          spacing: 8,
-                          children: [
-                            for (var page = 1; page <= totalPages; page++)
-                              _PaginationButton(
-                                page: page,
-                                selected: page == currentPage,
-                                onTap: () => onPageChanged(page),
-                              ),
-                          ],
-                        ),
-                      ],
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              for (var page = 1; page <= totalPages; page++)
+                                _PaginationButton(
+                                  page: page,
+                                  selected: page == currentPage,
+                                  onTap: () => onPageChanged?.call(page),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _EmptyTableRow extends StatelessWidget {
+  const _EmptyTableRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 70,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.panelBorder)),
+      ),
+      child: const Text(
+        'No hay registros para mostrar',
+        style: TextStyle(
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

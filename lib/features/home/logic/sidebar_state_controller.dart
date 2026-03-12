@@ -5,8 +5,8 @@ class SidebarStateController extends ChangeNotifier {
 
   static final SidebarStateController instance = SidebarStateController._();
 
-  bool _expanded = false;
-  bool _pinned = false;
+  bool _expanded = true;
+  bool _pinned = true;
 
   bool get expanded => _expanded;
   bool get pinned => _pinned;

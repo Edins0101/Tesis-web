@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_routes.dart';
+import '../../../../data/models/access_list_models.dart';
 import '../../logic/home_dashboard_controller.dart';
+import '../widgets/access_records_table.dart';
 import '../widgets/app_screen_layout.dart';
 import '../widgets/charts.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/dashboard_sidebar.dart' show SidebarDestination;
-import '../widgets/filter_panel.dart';
 import '../widgets/kpi_grid.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -23,6 +24,14 @@ class _DashboardPageState extends State<DashboardPage> {
     if (destination == SidebarDestination.accessList) {
       Navigator.pushReplacementNamed(context, AppRoutes.accessList);
     }
+  }
+
+  void _onViewRecord(AccessRecord record) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.accessDetail,
+      arguments: record.id,
+    );
   }
 
   @override
@@ -80,14 +89,12 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const DashboardHeader(
-                          title: 'Dashboard',
-                          subtitle: 'Reporteria de Accesos',
-                        ),
-                        const SizedBox(height: 18),
-                        FilterPanel(
-                          filters: dashboardData.filters,
-                          compact: compact,
+                        const Align(
+                          alignment: Alignment.topLeft,
+                          child: DashboardHeader(
+                            title: 'Dashboard',
+                            subtitle: 'Reporteria de Accesos',
+                          ),
                         ),
                         const SizedBox(height: 18),
                         KpiGrid(kpis: dashboardData.kpis),
@@ -95,6 +102,14 @@ class _DashboardPageState extends State<DashboardPage> {
                         BottomCharts(
                           data: dashboardData,
                           compact: compact,
+                        ),
+                        const SizedBox(height: 18),
+                        AccessRecordsTable(
+                          title: 'Ultimos ingresos',
+                          records: _controller.recentRecords,
+                          totalRecords: _controller.recentRecords.length,
+                          onViewRecord: _onViewRecord,
+                          showPagination: false,
                         ),
                       ],
                     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_routes.dart';
 import '../../logic/sidebar_state_controller.dart';
 
 enum SidebarDestination {
@@ -23,6 +24,12 @@ class DashboardSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = stateController ?? SidebarStateController.instance;
+    void onLogout() {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.login,
+        (route) => false,
+      );
+    }
 
     return MouseRegion(
       onEnter: (_) => controller.setHoverExpanded(true),
@@ -95,22 +102,14 @@ class DashboardSidebar extends StatelessWidget {
                       onTap: () => onSelected(SidebarDestination.accessList),
                     ),
                     const Spacer(),
-                    if (contentExpanded)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: TextButton.icon(
-                          onPressed: controller.togglePin,
-                          icon: Icon(
-                            controller.pinned
-                                ? Icons.keyboard_double_arrow_left
-                                : Icons.keyboard_double_arrow_right,
-                            size: 18,
-                          ),
-                          label: Text(
-                            controller.pinned ? 'Contraer' : 'Expandir',
-                          ),
-                        ),
-                      ),
+                    _SidebarItem(
+                      icon: Icons.logout_rounded,
+                      label: 'Cerrar sesion',
+                      expanded: contentExpanded,
+                      width: itemWidth,
+                      selected: false,
+                      onTap: onLogout,
+                    ),
                   ],
                 );
               },
